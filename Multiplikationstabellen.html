@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplication Practice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap">
+    <style>
+        /* Use Inter as the default font */
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation; /* Prevents double-tap zoom on buttons */
+        }
+        
+        /* Custom styles for the input to look good */
+        input[type="tel"] {
+            /* Remove number input spinners in Chrome, Safari, Edge, Opera */
+            -webkit-appearance: none;
+            margin: 0;
+            /* Remove number input spinners in Firefox */
+            -moz-appearance: textfield;
+        }
+
+        /* Basic transition for feedback */
+        .feedback-anim {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ensure html and body take full height for vertical centering */
+        html, body {
+            height: 100%;
+            overflow-x: hidden; /* Allow vertical scroll on results */
+        }
+        
+        /* Custom scrollbar for the wrong answers list */
+        #wrong-answers-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        #wrong-answers-list::-webkit-scrollbar-track {
+            background: #2d3748; /* gray-800 */
+        }
+        #wrong-answers-list::-webkit-scrollbar-thumb {
+            background: #4a5568; /* gray-600 */
+            border-radius: 4px;
+        }
+        #wrong-answers-list::-webkit-scrollbar-thumb:hover {
+            background: #718096; /* gray-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-sm mx-auto">
+
+        <div id="settings-screen" class="w-full text-center">
+            <h1 class="text-3xl font-bold mb-8">Multiplication Practice</h1>
+            <p class="text-xl mb-6 text-gray-300">How many problems?</p>
+            <div class="space-y-4">
+                <button onclick="startGame(15)" class="w-full p-4 text-lg font-bold bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+                    15 Problems
+                </button>
+                <button onclick="startGame(30)" class="w-full p-4 text-lg font-bold bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+                    30 Problems
+                </button>
+                <button onclick="startGame(45)" class="w-full p-4 text-lg font-bold bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+                    45 Problems
+                </button>
+            </div>
+        </div>
+
+        <div id="game-screen" class="w-full hidden">
+            <div id="progress-text" class="text-center text-lg text-gray-400 mb-4">Problem 1 of 15</div>
+            
+            <div id="problem-display" class="text-6xl font-bold text-center text-yellow-400 my-10 h-20 flex items-center justify-center">
+                (-8) × 7 =
+            </div>
+
+            <input type="tel" id="answer-input" pattern="[0-9-]*" class="w-full p-4 text-4xl text-center text-black font-bold rounded-lg border-4 border-gray-400 focus:border-blue-500 focus:ring-0" placeholder="?" autocomplete="off">
+            
+            <div class="h-24 mt-6 text-center">
+                <div id="correct-feedback" class="hidden feedback-anim">
+                    <p class="text-3xl text-green-500 font-bold">Correct!</p>
+                </div>
+                
+                <div id="incorrect-feedback" class="hidden feedback-anim space-y-4">
+                    <p class="text-2xl text-red-500 font-bold">Wrong.</p>
+                    <p class="text-xl text-gray-300">The correct answer was: <span id="correct-answer-text" class="font-bold text-white"></span></p>
+                </div>
+            </div>
+            
+            <div class="mt-4 space-y-4">
+                <button id="submit-answer" class="w-full p-4 text-lg font-bold bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400">
+                    Check Answer
+                </button>
+                <button id="next-problem-button" class="w-full p-4 text-lg font-bold bg-gray-600 rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 hidden">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <div id="results-screen" class="w-full text-center hidden">
+            <h1 class="text-4xl font-bold mb-8">Results</h1>
+            
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+                <div class="text-2xl">
+                    <span class="text-gray-400">Time:</span>
+                    <span id="time-taken" class="font-bold text-white"></span>
+                </div>
+                
+                <div class="text-2xl">
+                    <span class="text-gray-400">Score:</span>
+                    <span id="score-percentage" class="font-bold text-green-500"></span>
+                </div>
+
+                <div class="text-xl">
+                    <span id="score-details" class="text-gray-300"></span>
+                </div>
+            </div>
+
+            <div id="wrong-answers-container" class="mt-8 text-left hidden">
+                <h3 class="text-2xl font-bold mb-4 text-gray-100">Problems to Review:</h3>
+                <div id="wrong-answers-list" class="bg-gray-800 p-4 rounded-lg max-h-48 overflow-y-auto space-y-2">
+                    </div>
+            </div>
+
+            <button onclick="playAgain()" class="w-full p-4 text-lg font-bold bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 mt-10">
+                Play Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const settingsScreen = document.getElementById('settings-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const resultsScreen = document.getElementById('results-screen');
+
+        const progressText = document.getElementById('progress-text');
+        const problemDisplay = document.getElementById('problem-display');
+        const answerInput = document.getElementById('answer-input');
+
+        const correctFeedback = document.getElementById('correct-feedback');
+        const incorrectFeedback = document.getElementById('incorrect-feedback');
+        const correctAnswerText = document.getElementById('correct-answer-text');
+
+        const submitButton = document.getElementById('submit-answer');
+        const nextButton = document.getElementById('next-problem-button');
+
+        const timeTaken = document.getElementById('time-taken');
+        const scorePercentage = document.getElementById('score-percentage');
+        const scoreDetails = document.getElementById('score-details');
+        
+        const wrongAnswersContainer = document.getElementById('wrong-answers-container');
+        const wrongAnswersList = document.getElementById('wrong-answers-list');
+
+        // --- Game State ---
+        let totalProblems = 0;
+        let currentProblemIndex = 0;
+        let correctCount = 0;
+        let problems = []; // Array of { display, answer }
+        let wrongAnswers = []; // Array to store { display, answer } for wrong ones
+        let startTime;
+        let currentCorrectAnswer = 0;
+        let isWaitingForNext = false; // Prevents multiple submissions
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            submitButton.addEventListener('click', checkAnswer);
+            nextButton.addEventListener('click', () => {
+                currentProblemIndex++;
+                displayProblem();
+            });
+
+            answerInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    if (!isWaitingForNext) {
+                        checkAnswer();
+                    } else if (nextButton.style.display !== 'none') {
+                        nextButton.click();
+                    }
+                }
+            });
+        });
+
+        /**
+         * Shows a specific screen and hides the others.
+         */
+        function showScreen(screenId) {
+            settingsScreen.classList.add('hidden');
+            gameScreen.classList.add('hidden');
+            resultsScreen.classList.add('hidden');
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        /**
+         * Starts the game with the selected number of problems.
+         */
+        function startGame(numProblems) {
+            totalProblems = numProblems;
+            currentProblemIndex = 0;
+            correctCount = 0;
+            problems = [];
+            wrongAnswers = []; 
+            isWaitingForNext = false;
+
+            generateProblems();
+            startTime = new Date();
+            
+            showScreen('game-screen');
+            displayProblem();
+        }
+
+        /**
+         * Generates a random integer between min and max (inclusive).
+         */
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        /**
+         * Gets a random operand for multiplication.
+         * Returns an integer between -10 and 10, excluding -1, 0, and 1.
+         */
+        function getRandomOperand() {
+            let num;
+            const excluded = [-1, 0, 1];
+            do {
+                num = randomInt(-10, 10);
+            } while (excluded.includes(num));
+            return num;
+        }
+
+        /**
+         * Fills the 'problems' array with multiplication problems.
+         */
+        function generateProblems() {
+            problems = []; // Clear problems array
+            for (let i = 0; i < totalProblems; i++) {
+                const a = getRandomOperand();
+                const b = getRandomOperand();
+                const answer = a * b;
+                
+                // --- UPDATED ---
+                // Format numbers with parentheses if negative
+                const displayA = a < 0 ? `(${a})` : a;
+                const displayB = b < 0 ? `(${b})` : b;
+
+                // Use the '×' multiplication symbol for display
+                const display = `${displayA} × ${displayB}`;
+                
+                problems.push({ display, answer });
+            }
+        }
+
+        /**
+         * Displays the current problem on the screen.
+         */
+        function displayProblem() {
+            if (currentProblemIndex >= totalProblems) {
+                showResults();
+                return;
+            }
+
+            // Reset UI state
+            isWaitingForNext = false;
+            correctFeedback.classList.add('hidden');
+            incorrectFeedback.classList.add('hidden');
+            submitButton.classList.remove('hidden');
+            nextButton.classList.add('hidden');
+            answerInput.value = '';
+            answerInput.disabled = false;
+
+            // Get current problem
+            const problem = problems[currentProblemIndex];
+            currentCorrectAnswer = problem.answer;
+            problemDisplay.textContent = `${problem.display} =`;
+            progressText.textContent = `Problem ${currentProblemIndex + 1} of ${totalProblems}`;
+
+            // Focus the input field
+            setTimeout(() => answerInput.focus(), 10);
+        }
+
+        /**
+         * Checks the user's answer.
+         */
+        function checkAnswer() {
+            if (isWaitingForNext) return; 
+
+            const userAnswer = parseInt(answerInput.value, 10);
+
+            if (isNaN(userAnswer)) {
+                handleIncorrectAnswer();
+            } else if (userAnswer === currentCorrectAnswer) {
+                handleCorrectAnswer();
+            } else {
+                handleIncorrectAnswer();
+            }
+        }
+
+        /**
+         * Handles the flow for a correct answer.
+         */
+        function handleCorrectAnswer() {
+            correctCount++;
+            isWaitingForNext = true;
+            
+            correctFeedback.classList.remove('hidden');
+            incorrectFeedback.classList.add('hidden');
+            submitButton.classList.add('hidden');
+            answerInput.disabled = true;
+
+            setTimeout(() => {
+                currentProblemIndex++;
+                displayProblem();
+            }, 1000); // 1 second delay
+        }
+
+        /**
+         * Handles the flow for an incorrect answer.
+         */
+        function handleIncorrectAnswer() {
+            isWaitingForNext = true;
+            
+            // Log the incorrect problem for review
+            const problem = problems[currentProblemIndex];
+            wrongAnswers.push({ 
+                display: problem.display, 
+                answer: currentCorrectAnswer 
+            });
+
+            correctFeedback.classList.add('hidden');
+            incorrectFeedback.classList.remove('hidden');
+            correctAnswerText.textContent = currentCorrectAnswer;
+            submitButton.classList.add('hidden');
+            nextButton.classList.remove('hidden');
+            answerInput.disabled = true;
+
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
+            }
+        }
+
+        /**
+         * Calculates and displays the final results.
+         */
+        function showResults() {
+            const endTime = new Date();
+            const timeDiffSeconds = Math.round((endTime - startTime) / 1000);
+            const percentage = Math.round((correctCount / totalProblems) * 100);
+
+            const minutes = Math.floor(timeDiffSeconds / 60);
+            const seconds = timeDiffSeconds % 60;
+            timeTaken.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            scorePercentage.textContent = `${percentage}%`;
+            scorePercentage.className = `font-bold ${percentage > 89 ? 'text-green-500' : (percentage > 69 ? 'text-yellow-500' : 'text-red-500')}`;
+            scoreDetails.textContent = `You got ${correctCount} out of ${totalProblems} correct.`;
+
+            // Populate Wrong Answers List
+            wrongAnswersList.innerHTML = ''; // Clear any previous results
+            
+            if (wrongAnswers.length > 0) {
+                wrongAnswersContainer.classList.remove('hidden'); // Show the container
+                
+                wrongAnswers.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = "text-lg text-red-300 font-mono"; // Style it
+                    // The 'display' string already has parentheses
+                    li.textContent = `${item.display} = ${item.answer}`;
+                    wrongAnswersList.appendChild(li);
+                });
+            } else {
+                // Perfect score
+                wrongAnswersContainer.classList.remove('hidden'); // Show container
+                wrongAnswersList.innerHTML = '<p class="text-lg text-green-400">Great job! No incorrect answers.</p>';
+            }
+            
+            showScreen('results-screen');
+        }
+
+        /**
+         * Resets the app to the settings screen.
+         */
+        function playAgain() {
+            wrongAnswersContainer.classList.add('hidden');
+            showScreen('settings-screen');
+        }
+    </script>
+</body>
+</html>
